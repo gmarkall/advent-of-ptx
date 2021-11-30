@@ -1,0 +1,32 @@
+// Advent of code 2021
+//
+// Day 0 "solution" - test file that prints "Hello world"
+
+.version 7.3
+.target sm_75
+.address_size 64
+
+.extern .func  (.param .b32 chars_written) vprintf(.param .b64 fmt);
+
+.const .align 1 .b8 hello_world[13] = {72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 10, 0};
+
+.visible .func  (.param .b32 exc_ptr) solution(.param .b64 return_value)
+{
+    .reg .b32     %r<1>;
+    .reg .b64     %rd<2>;
+
+    mov.u64     %rd0, hello_world;
+    cvta.const.u64     %rd1, %rd0;
+
+    {
+        .param .b64 fmt;
+        st.param.b64     [fmt], %rd1;
+        .param .b32 chars_written;
+
+        call.uni (chars_written), vprintf, (fmt);
+    }
+
+    mov.u32     %r0, 0;
+    st.param.b32     [exc_ptr], %r0;
+    ret;
+}
