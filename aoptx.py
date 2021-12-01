@@ -14,7 +14,8 @@ def run(day):
     config.CUDA_LOW_OCCUPANCY_WARNINGS = 0
     base_dir = os.path.dirname(os.path.abspath(__file__))
     day_dir = os.path.join(base_dir, f'day{day}')
-    ptx_path = os.path.join(day_dir, 'solution.ptx')
+    part1_path = os.path.join(day_dir, 'part1.ptx')
+    part2_path = os.path.join(day_dir, 'part2.ptx')
     input_path = os.path.join(day_dir, 'input')
 
     with open(input_path, 'r') as f:
@@ -24,16 +25,17 @@ def run(day):
     data_ptr = device_values.__cuda_array_interface__['data'][0]
     data_len = device_values.__cuda_array_interface__['shape'][0]
 
-    solution = cuda.declare_device('solution', 'void(uint64, uint64)')
+    part1 = cuda.declare_device('part1', 'void(uint64, uint64)')
+    part2 = cuda.declare_device('part2', 'void(uint64, uint64)')
 
-    @cuda.jit('void(uint64, uint64)', link=[ptx_path])
+    @cuda.jit('void(uint64, uint64)', link=[part1_path, part2_path])
     def wrapper(data_ptr, data_len):
-        solution(data_ptr, data_len)
+        part1(data_ptr, data_len)
+        part2(data_ptr, data_len)
 
     wrapper[1, 1](data_ptr, data_len)
     cuda.synchronize()
 
-    print(device_values[0])
 
 def usage():
     print("Usage: aoptx.py <day>")

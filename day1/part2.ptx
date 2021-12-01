@@ -1,6 +1,6 @@
 // Advent of code 2021
 //
-// Day 1 part 1 
+// Day 1 part 2
 
 .version 7.3
 .target sm_75
@@ -11,7 +11,7 @@
 // "%d\n"
 .const .align 1 .b8 int_fmt[4] = {37, 100, 10, 0};
 
-.visible .func  (.param .b32 exc_ptr) solution(.param .b64 return_value, .param .b64 input_ptr, .param .u64 input_len)
+.visible .func  (.param .b32 exc_ptr) part2(.param .b64 return_value, .param .b64 input_ptr, .param .u64 input_len)
 {
     // Local memory for stack
     .local .align 8 .b8   local_stack[8];
