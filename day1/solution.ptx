@@ -11,15 +11,38 @@
 // "%d\n"
 .const .align 1 .b8 int_fmt[4] = {37, 100, 10, 0};
 
-.visible .func  (.param .b32 exc_ptr) solution(.param .b64 return_value, .param .b64 input_ptr)
+.visible .func  (.param .b32 exc_ptr) solution(.param .b64 return_value, .param .b64 input_ptr, .param .u64 input_len)
 {
     .reg .b32     %r<2>;
-    .reg .b64     %rd<3>;
+    .reg .b64     %rd<6>;
+    .reg .pred    %p<1>;
 
     mov.u64            %rd0, int_fmt;
     cvta.const.u64     %rd1, %rd0;
 
     ld.param.b64       %rd2, [input_ptr];
+    ld.param.b64       %rd5, [input_len];
+
+    // Initialise increment count to 0
+    mov.s64            %rd3, 0;
+    // Initialise loop counter to 0
+    mov.u64            %rd4, 0;
+
+    // Loop test
+$test:
+    setp.ge.u64        %p0, %rd4, %rd5;
+    @%p0 bra           $print_solution;
+
+    // Increment increments by 1
+    add.u64            %rd3, %rd3, 1;
+
+    // Increment loop count and jump back to test
+    add.u64            %rd4, %rd4, 1;
+    bra                $test;
+
+$print_solution:
+    // Store increments in input as a temp hack to display
+    st.u64             [%rd2], %rd3;
 
     {
         .param .b64        fmt;

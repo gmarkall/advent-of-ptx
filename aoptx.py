@@ -22,14 +22,15 @@ def run(day):
 
     device_values = cuda.to_device(values)
     data_ptr = device_values.__cuda_array_interface__['data'][0]
+    data_len = device_values.__cuda_array_interface__['shape'][0]
 
-    solution = cuda.declare_device('solution', 'void(uint64)')
+    solution = cuda.declare_device('solution', 'void(uint64, uint64)')
 
-    @cuda.jit('void(uint64)', link=[ptx_path])
-    def wrapper(ptr):
-        solution(ptr)
+    @cuda.jit('void(uint64, uint64)', link=[ptx_path])
+    def wrapper(data_ptr, data_len):
+        solution(data_ptr, data_len)
 
-    wrapper[1, 1](data_ptr)
+    wrapper[1, 1](data_ptr, data_len)
     cuda.synchronize()
 
 
