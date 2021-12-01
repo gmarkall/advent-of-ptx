@@ -20,6 +20,10 @@ Some remarks on the solutions:
   Interface](https://numba.readthedocs.io/en/latest/cuda/cuda_array_interface.html).
 - [The harness](aoptx.py) contains further comments explaining its operation.
 
+Please do send comments / questions / feedback, either in the
+[Issues](https://github.com/gmarkall/advent-of-ptx/issues) or on Twitter:
+[@gmarkall](https://twitter.com/gmarkall)
+
 
 ## Invocation
 
