@@ -33,6 +33,7 @@ def run(day):
     wrapper[1, 1](data_ptr, data_len)
     cuda.synchronize()
 
+    print(device_values[0])
 
 def usage():
     print("Usage: aoptx.py <day>")

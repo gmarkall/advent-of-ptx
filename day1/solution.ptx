@@ -13,12 +13,22 @@
 
 .visible .func  (.param .b32 exc_ptr) solution(.param .b64 return_value, .param .b64 input_ptr, .param .u64 input_len)
 {
+    // Local memory for stack
+    .local .align 8 .b8   local_stack[8];
+    // Stack pointer as a generic pointer
+    .reg .b64     %SP;
+    // Stack pointer in local address space
+    .reg .b64     %SPL;
+
     .reg .b32     %r<2>;
-    .reg .b64     %rd<6>;
+    .reg .b64     %rd<7>;
     .reg .pred    %p<1>;
 
     mov.u64            %rd0, int_fmt;
     cvta.const.u64     %rd1, %rd0;
+
+    mov.u64            %SPL, local_stack;
+    cvta.local.u64     %SP, %SPL;
 
     ld.param.b64       %rd2, [input_ptr];
     ld.param.b64       %rd5, [input_len];
@@ -41,14 +51,14 @@ $test:
     bra                $test;
 
 $print_solution:
-    // Store increments in input as a temp hack to display
-    st.u64             [%rd2], %rd3;
+    // Store increments on stack
+    st.local.u64             [%SPL], %rd3;
 
     {
         .param .b64        fmt;
         .param .b64        ptr_val;
         st.param.b64       [fmt], %rd1;
-        st.param.b64       [ptr_val], %rd2;
+        st.param.b64       [ptr_val], %SP;
         .param .b32        chars_written;
 
         call.uni (chars_written), vprintf, (fmt, ptr_val);
