@@ -20,7 +20,6 @@
     cvta.const.u64     %rd1, %rd0;
 
     ld.param.b64       %rd2, [input_ptr];
-    ld.b32             %r1, [%rd2];
 
     {
         .param .b64        fmt;
