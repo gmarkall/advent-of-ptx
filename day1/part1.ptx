@@ -6,11 +6,20 @@
 .target sm_75
 .address_size 64
 
+// Forward-declare vprintf so we can call it to print the solution
 .extern .func  (.param .b32 chars_written) vprintf(.param .b64 fmt, .param .b64 arg1);
 
-// "%d\n"
+// "%d\n" format string
 .const .align 1 .b8 int_fmt[4] = {37, 100, 10, 0};
 
+// Function declaration specifies arguments:
+//
+// - Return value - not used, because we don't return anything
+// - Pointer to input data
+// - Number of input elements
+//
+// The return value of the function is for signalling the occurrence of Python
+// exceptions (which we don't need to do).
 .visible .func  (.param .b32 exc_ptr) part1(.param .b64 return_value, .param .b64 input_ptr, .param .u64 input_len)
 {
     // Local memory for stack
@@ -20,20 +29,31 @@
     // Stack pointer in local address space
     .reg .b64     %SPL;
 
+    // Declare some registers - with hindsight, I would have given these
+    // meaningful names, and will do so in future solutions instead of using
+    // names like %rd2, etc.
     .reg .b32     %r<2>;
     .reg .b64     %rd<7>;
     .reg .pred    %p<1>;
 
+    // Depth at the previous point
     .reg .b64     %previous;
+    // Depth at the current point
     .reg .b64     %current;
+    // Pointer to the current element in the input
     .reg .b64     %current_ptr;
 
+    // Load a pointer to the format string pointer into a register - used later
+    // for printing the solution.
     mov.u64            %rd0, int_fmt;
     cvta.const.u64     %rd1, %rd0;
 
+    // Store a pointer to the stack in registers with local and generic address
+    // spaces. The stack is used to hold the result later for printing.
     mov.u64            %SPL, local_stack;
     cvta.local.u64     %SP, %SPL;
 
+    // Load parameters into registers
     ld.param.b64       %rd2, [input_ptr];
     ld.param.b64       %rd5, [input_len];
 
@@ -80,6 +100,9 @@ $print_solution:
         call.uni (chars_written), vprintf, (fmt, ptr_val);
     }
 
+    // Numba expects the return value to signal whether a Python exception
+    // occurred during execution of a device function. Since we're not Python,
+    // no exception occurred, so we can just return 0 to indicate success.
     mov.u32          %r0, 0;
     st.param.b32     [exc_ptr], %r0;
     ret;
