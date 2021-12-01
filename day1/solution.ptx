@@ -1,0 +1,38 @@
+// Advent of code 2021
+//
+// Day 1 part 1 
+
+.version 7.3
+.target sm_75
+.address_size 64
+
+.extern .func  (.param .b32 chars_written) vprintf(.param .b64 fmt, .param .b64 arg1);
+
+// "%d\n"
+.const .align 1 .b8 int_fmt[4] = {37, 100, 10, 0};
+
+.visible .func  (.param .b32 exc_ptr) solution(.param .b64 return_value, .param .b64 input_ptr)
+{
+    .reg .b32     %r<2>;
+    .reg .b64     %rd<3>;
+
+    mov.u64            %rd0, int_fmt;
+    cvta.const.u64     %rd1, %rd0;
+
+    ld.param.b64       %rd2, [input_ptr];
+    ld.b32             %r1, [%rd2];
+
+    {
+        .param .b64        fmt;
+        .param .b64        ptr_val;
+        st.param.b64       [fmt], %rd1;
+        st.param.b64       [ptr_val], %rd2;
+        .param .b32        chars_written;
+
+        call.uni (chars_written), vprintf, (fmt, ptr_val);
+    }
+
+    mov.u32          %r0, 0;
+    st.param.b32     [exc_ptr], %r0;
+    ret;
+}
