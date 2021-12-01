@@ -67,7 +67,7 @@ $test:
     bra                $test;
 
 $print_solution:
-    // Store increments on stack
+    // Store result on stack for printing
     st.local.u64             [%SPL], %rd3;
 
     {
