@@ -10,7 +10,7 @@
 
 .const .align 1 .b8 hello_world[13] = {72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 10, 0};
 
-.visible .func  (.param .b32 exc_ptr) solution(.param .b64 return_value)
+.visible .func  (.param .b32 exc_ptr) part1(.param .b64 return_value, .param .b64 input_ptr, .param .b64 input_len)
 {
     .reg .b32     %r<1>;
     .reg .b64     %rd<2>;

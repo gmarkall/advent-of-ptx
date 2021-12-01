@@ -1,0 +1,97 @@
+// Advent of code 2021
+//
+// Day 1 part 2
+
+.version 7.3
+.target sm_75
+.address_size 64
+
+.extern .func  (.param .b32 chars_written) vprintf(.param .b64 fmt, .param .b64 arg1);
+
+// "%d\n"
+.const .align 1 .b8 int_fmt[4] = {37, 100, 10, 0};
+
+.visible .func  (.param .b32 exc_ptr) part2(.param .b64 return_value, .param .b64 input_ptr, .param .u64 input_len)
+{
+    // Local memory for stack
+    .local .align 8 .b8   local_stack[8];
+    // Stack pointer as a generic pointer
+    .reg .b64     %SP;
+    // Stack pointer in local address space
+    .reg .b64     %SPL;
+
+    .reg .b32     %r<2>;
+    .reg .b64     %rd<7>;
+    .reg .pred    %p<1>;
+
+    .reg .b64     %previous;
+    .reg .b64     %current;
+    .reg .b64     %current_ptr;
+    .reg .b64     %window_tmp;
+
+    mov.u64            %rd0, int_fmt;
+    cvta.const.u64     %rd1, %rd0;
+
+    mov.u64            %SPL, local_stack;
+    cvta.local.u64     %SP, %SPL;
+
+    ld.param.b64       %rd2, [input_ptr];
+    ld.param.b64       %rd5, [input_len];
+
+    // Initialise increment count to 0
+    mov.s64            %rd3, 0;
+    // Initialise loop counter to 3
+    mov.u64            %rd4, 3;
+
+    // Load in first window
+    ld.s64             %previous, [%rd2];
+    ld.s64             %window_tmp, [%rd2+8];
+    add.s64            %previous, %previous, %window_tmp;
+    ld.s64             %window_tmp, [%rd2+16];
+    add.s64            %previous, %previous, %window_tmp;
+
+    // Set current pointer to first element
+    mov.s64            %current_ptr, %rd2;
+
+    // Loop test
+$test:
+    setp.ge.u64        %p0, %rd4, %rd5;
+    @%p0 bra           $print_solution;
+
+    // Increment current pointer and load window
+    add.s64            %current_ptr, %current_ptr, 8;
+    ld.s64             %current, [%current_ptr];
+    ld.s64             %window_tmp, [%current_ptr+8];
+    add.s64            %current, %current, %window_tmp;
+    ld.s64             %window_tmp, [%current_ptr+16];
+    add.s64            %current, %current, %window_tmp;
+
+    // Increment increments if current greater than previous
+    setp.gt.s64        %p0, %current, %previous;
+    @%p0 add.u64       %rd3, %rd3, 1;
+
+    // Set previous to current
+    mov.s64            %previous, %current;
+
+    // Increment loop count and jump back to test
+    add.u64            %rd4, %rd4, 1;
+    bra                $test;
+
+$print_solution:
+    // Store result on stack for printing
+    st.local.u64             [%SPL], %rd3;
+
+    {
+        .param .b64        fmt;
+        .param .b64        ptr_val;
+        st.param.b64       [fmt], %rd1;
+        st.param.b64       [ptr_val], %SP;
+        .param .b32        chars_written;
+
+        call.uni (chars_written), vprintf, (fmt, ptr_val);
+    }
+
+    mov.u32          %r0, 0;
+    st.param.b32     [exc_ptr], %r0;
+    ret;
+}

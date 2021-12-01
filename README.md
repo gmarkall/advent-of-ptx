@@ -3,12 +3,13 @@
 ## Invocation
 
 ```
-$ python aoptx.py <Solution PTX>
+$ python aoptx.py <day>
 ```
 
 To test execution, run the "day 0" solution, which just prints `Hello World`:
 
 ```
-$ python aoptx.py day_0.ptx 
+$ python aoptx.py 0
+Hello world
 Hello world
 ```
