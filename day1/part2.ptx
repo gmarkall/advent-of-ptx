@@ -27,6 +27,7 @@
     .reg .b64     %previous;
     .reg .b64     %current;
     .reg .b64     %current_ptr;
+    .reg .b64     %window_tmp;
 
     mov.u64            %rd0, int_fmt;
     cvta.const.u64     %rd1, %rd0;
@@ -39,10 +40,16 @@
 
     // Initialise increment count to 0
     mov.s64            %rd3, 0;
-    // Initialise loop counter to 1
-    mov.u64            %rd4, 1;
-    // Load in first element
+    // Initialise loop counter to 3
+    mov.u64            %rd4, 3;
+
+    // Load in first window
     ld.s64             %previous, [%rd2];
+    ld.s64             %window_tmp, [%rd2+8];
+    add.s64            %previous, %previous, %window_tmp;
+    ld.s64             %window_tmp, [%rd2+16];
+    add.s64            %previous, %previous, %window_tmp;
+
     // Set current pointer to first element
     mov.s64            %current_ptr, %rd2;
 
@@ -51,9 +58,13 @@ $test:
     setp.ge.u64        %p0, %rd4, %rd5;
     @%p0 bra           $print_solution;
 
-    // Increment current pointer and load element
+    // Increment current pointer and load window
     add.s64            %current_ptr, %current_ptr, 8;
     ld.s64             %current, [%current_ptr];
+    ld.s64             %window_tmp, [%current_ptr+8];
+    add.s64            %current, %current, %window_tmp;
+    ld.s64             %window_tmp, [%current_ptr+16];
+    add.s64            %current, %current, %window_tmp;
 
     // Increment increments if current greater than previous
     setp.gt.s64        %p0, %current, %previous;
