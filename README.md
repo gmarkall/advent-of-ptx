@@ -66,3 +66,13 @@ See the [Part 1 solution](day1/part1.ptx) for extensive comments. [Part
 2](day1/part2.ptx) also has some comments, but is less thorough - it is just a
 slight modification of the code for Part 1.
 
+### Day 2
+
+Notable new concepts:
+
+- Logical operations
+- Multiplication (low bits only)
+
+These solutions are a little tidier and better commented than the Day 1
+solutions. Refer to [Part 1](day2/part1.ptx) - Part 2 is almost exactly the
+same.

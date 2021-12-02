@@ -10,6 +10,53 @@ import os
 import sys
 
 
+# Each day has input in a different format, so we define a function to load
+# the input for each day.
+
+def day_0_input(path):
+    # Day 0 has no input, so just return a dummy value
+    return np.zeros(1, dtype=np.uint64)
+
+
+def day_1_input(path):
+    # Day 1 is a list of integers
+    with open(path, 'r') as f:
+        return np.asarray([int(line.strip()) for line in f.readlines()])
+
+
+def day_2_input(path):
+    # Day 2 is a list of pairs "<command> <value>".
+    # Encode as a 64 bit integer with the upper 32 bits holding the command and
+    # the lower holding the value. Commands are:
+    #
+    # 0: Forward
+    # 1: Down
+    # 2: Up
+
+    with open(path, 'r') as f:
+        pairs = [line.strip().split() for line in f.readlines()]
+
+    values = np.zeros(len(pairs), dtype=np.uint64)
+
+    cmds = {
+        'forward': 0,
+        'down': 1,
+        'up': 2
+    }
+
+    for i, (cmd, val) in enumerate(pairs):
+        values[i] = (cmds[cmd] << 32) | int(val)
+
+    return values
+
+
+INPUT_LOADERS = (
+    day_0_input,
+    day_1_input,
+    day_2_input,
+)
+
+
 def run(day):
     # Disable low occupancy warnings - because we run only with a single block
     # / thread (because we're not really interested in high performance for
@@ -25,8 +72,7 @@ def run(day):
     input_path = os.path.join(day_dir, 'input')
 
     # Read in today's input
-    with open(input_path, 'r') as f:
-        values = np.asarray([int(line.strip()) for line in f.readlines()])
+    values = INPUT_LOADERS[day](input_path)
 
     # Move the data to the GPU and get a pointer to the data and the number of
     # entries
