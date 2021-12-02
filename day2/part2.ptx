@@ -103,7 +103,7 @@ $test:
     setp.eq.u64        %matched, %current_direction, 1;
     @%matched add.u64  %aim, %aim, %current_value;
 
-    // Handle "down" command
+    // Handle "up" command
     setp.eq.u64        %matched, %current_direction, 2;
     @%matched sub.u64  %aim, %aim, %current_value;
 
