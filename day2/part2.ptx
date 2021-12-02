@@ -1,34 +1,148 @@
 // Advent of code 2021
 //
-// Day 0 "solution" - test file that prints "Hello world"
+// Day 2 part 1
 
+// PTX Version - 7.3 is for toolkit 11.3 onwards
 .version 7.3
+// SM version / compute capability target - sm_75 is Turing onwards
 .target sm_75
+// 32- or 64-bit address space. In practice almost always 64 these days.
 .address_size 64
 
-.extern .func  (.param .b32 chars_written) vprintf(.param .b64 fmt, .param .b64 arg1);
+// Forward-declare vprintf so we can call it to print the solution
+.extern .func  (.param .b32 chars_written) vprintf(
+    .param .b64 fmt,
+    .param .b64 arg1);
 
-.const .align 1 .b8 hello_world[13] = {72, 101, 108, 108, 111, 32, 119, 111, 114, 108, 100, 10, 0};
+// "%d\n" format string
+.const .align 1 .b8 int_fmt[4] = {37, 100, 10, 0};
 
-.visible .func  (.param .b32 exc_ptr) part2(.param .b64 return_value, .param .b64 input_ptr, .param .b64 input_len)
+// Function declaration specifies arguments:
+//
+// - Return value - not used, because we don't return anything
+// - Pointer to input data
+// - Number of input elements
+//
+// The return value of the function is for signalling the occurrence of Python
+// exceptions (which we don't need to do).
+.visible .func  (.param .b32 exc_ptr) part2(
+    .param .b64 return_value,
+    .param .b64 input_ptr_param,
+    .param .u64 input_len_param)
 {
-    .reg .b32     %r<1>;
-    .reg .b64     %rd<2>;
+    // Exception indicator - returned to Numba, will always be 0
+    .reg .b32     %exc;
 
-    mov.u64     %rd0, hello_world;
-    cvta.const.u64     %rd1, %rd0;
+    // Local memory for stack
+    .local .align 8 .b8   local_stack[8];
+    // Stack pointer as a generic pointer
+    .reg .b64     %SP;
+    // Stack pointer in local address space
+    .reg .b64     %SPL;
 
+    // For holding pointers to the format string - const and generic address
+    // spaces.
+    .reg .b64     %const_fmt_ptr;
+    .reg .b64     %fmt_ptr;
+
+    // Registers to hold parameter values
+    .reg .b64    %input_ptr;
+    .reg .b64    %input_len;
+
+    // Hold the current state
+    .reg .b64     %pos;
+    .reg .b64     %depth;
+    .reg .b64     %aim;
+    .reg .b64     %current_command;
+    .reg .b64     %current_direction;
+    .reg .b64     %current_value;
+
+    // The final result (pos * depth)
+    .reg .b64     %solution;
+
+    // Induction variable for loop over commands
+    .reg .b64     %i;
+
+    // Whether we've finished iterating over all commands
+    .reg .pred    %finished;
+
+    // Whether we've matched the current command
+    .reg .pred    %matched;
+
+    // Load parameters into registers
+    ld.param.b64       %input_ptr, [input_ptr_param];
+    ld.param.b64       %input_len, [input_len_param];
+
+    // Initialise position, depth, and aim
+    mov.u64       %pos, 0;
+    mov.u64       %depth, 0;
+    mov.u64       %aim, 0;
+
+    // We need to loop over all commands - initialize induction variable
+    mov.u64       %i, 0;
+
+$test:
+    setp.ge.u64        %finished, %i, %input_len;
+    @%finished bra     $print_solution;
+
+    // Load in current command:
+    // - Direction in the upper 32 bits
+    // - Value in the lower 32 bits
+    ld.u64             %current_command, [%input_ptr];
+    and.b64            %current_value, %current_command, 0xFFFFFFFF;
+    and.b64            %current_direction, %current_command, 0xFFFFFFFF00000000;
+    shr.b64            %current_direction, %current_direction, 32;
+
+    // Handle "forward" command
+    setp.eq.u64        %matched, %current_direction, 0;
+    @%matched add.u64  %pos, %pos, %current_value;
+    @%matched mul.lo.u64  %current_value, %aim, %current_value;
+    @%matched add.u64  %depth, %depth, %current_value;
+
+    // Handle "down" command
+    setp.eq.u64        %matched, %current_direction, 1;
+    @%matched add.u64  %aim, %aim, %current_value;
+
+    // Handle "down" command
+    setp.eq.u64        %matched, %current_direction, 2;
+    @%matched sub.u64  %aim, %aim, %current_value;
+
+    // Increment loop count and input pointer, and jump back to test
+    add.u64            %input_ptr, %input_ptr, 8;
+    add.u64            %i, %i, 1;
+    bra                $test;
+
+$print_solution:
+    // Store a pointer to the stack in registers with local and generic address
+    // spaces. The stack is used to hold the result for printing.
+    mov.u64            %SPL, local_stack;
+    cvta.local.u64     %SP, %SPL;
+
+    // Load a pointer to the format string pointer into a register
+    mov.u64            %const_fmt_ptr, int_fmt;
+    // Convert the const format string pointer to a generic address space
+    cvta.const.u64     %fmt_ptr, %const_fmt_ptr;
+
+    // Multiply pos and depth and store on stack for printing - multiplying the
+    // low halves is sufficient as our results are not so large.
+    mul.lo.u64         %solution, %pos, %depth; 
+    st.local.u64       [%SPL], %solution;
+
+    // vprintf call
     {
-        .param .b64 fmt;
-        .param .b64 arg1;
-        st.param.b64     [fmt], %rd1;
-        st.param.b64     [arg1], %rd1;
-        .param .b32 chars_written;
+        .param .b64        fmt;
+        .param .b64        ptr_val;
+        st.param.b64       [fmt], %fmt_ptr;
+        st.param.b64       [ptr_val], %SP;
+        .param .b32        chars_written;
 
-        call.uni (chars_written), vprintf, (fmt, arg1);
+        call.uni (chars_written), vprintf, (fmt, ptr_val);
     }
 
-    mov.u32     %r0, 0;
-    st.param.b32     [exc_ptr], %r0;
+    // Numba expects the return value to signal whether a Python exception
+    // occurred during execution of a device function. Since we're not Python,
+    // no exception occurred, so we can just return 0 to indicate success.
+    mov.u32          %exc, 0;
+    st.param.b32     [exc_ptr], %exc;
     ret;
 }
