@@ -53,12 +53,20 @@
     .reg .b64     %pos;
     .reg .b64     %depth;
     .reg .b64     %current_command;
+    .reg .b64     %current_direction;
+    .reg .b64     %current_value;
+
+    // The final result (pos * depth)
+    .reg .b64     %solution;
 
     // Induction variable for loop over commands
     .reg .b64     %i;
 
     // Whether we've finished iterating over all commands
     .reg .pred    %finished;
+
+    // Whether we've matched the current command
+    .reg .pred    %matched;
 
     // Load parameters into registers
     ld.param.b64       %input_ptr, [input_ptr_param];
@@ -75,13 +83,28 @@ $test:
     setp.ge.u64        %finished, %i, %input_len;
     @%finished bra     $print_solution;
 
-    // Load in current element
+    // Load in current command:
+    // - Direction in the upper 32 bits
+    // - Value in the lower 32 bits
     ld.u64             %current_command, [%input_ptr];
+    and.b64            %current_value, %current_command, 0xFFFFFFFF;
+    and.b64            %current_direction, %current_command, 0xFFFFFFFF00000000;
+    shr.b64            %current_direction, %current_direction, 32;
 
-    // TMP: increment pos for a test
-    add.u64            %pos, %pos, 1;
+    // Handle "forward" command
+    setp.eq.u64        %matched, %current_direction, 0;
+    @%matched add.u64  %pos, %pos, %current_value;
 
-    // Increment loop count and jump back to test
+    // Handle "down" command
+    setp.eq.u64        %matched, %current_direction, 1;
+    @%matched add.u64  %depth, %depth, %current_value;
+
+    // Handle "down" command
+    setp.eq.u64        %matched, %current_direction, 2;
+    @%matched sub.u64  %depth, %depth, %current_value;
+
+    // Increment loop count and input pointer, and jump back to test
+    add.u64            %input_ptr, %input_ptr, 8;
     add.u64            %i, %i, 1;
     bra                $test;
 
@@ -96,9 +119,12 @@ $print_solution:
     // Convert the const format string pointer to a generic address space
     cvta.const.u64     %fmt_ptr, %const_fmt_ptr;
 
-    // Store result on stack for printing
-    st.local.u64             [%SPL], %pos;
+    // Multiply pos and depth and store on stack for printing - multiplying the
+    // low halves is sufficient as our results are not so large.
+    mul.lo.u64         %solution, %pos, %depth; 
+    st.local.u64       [%SPL], %solution;
 
+    // vprintf call
     {
         .param .b64        fmt;
         .param .b64        ptr_val;
