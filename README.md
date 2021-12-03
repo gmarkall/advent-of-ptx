@@ -76,3 +76,12 @@ Notable new concepts:
 These solutions are a little tidier and better commented than the Day 1
 solutions. Refer to [Part 1](day2/part1.ptx) - Part 2 is almost exactly the
 same.
+
+## Useful references
+
+- [PTX ISA
+  Specification](https://docs.nvidia.com/cuda/parallel-thread-execution/): A
+  manual documenting PTX assembly language.
+- [Compute Sanitizer](https://docs.nvidia.com/cuda/compute-sanitizer/): Like
+  Valgrind, but for the GPU. It works even for handcoded PTX, and is very useful
+  for debugging.
